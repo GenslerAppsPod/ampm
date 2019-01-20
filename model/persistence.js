@@ -9,6 +9,8 @@ var Backbone = require('backbone'); // Data model utilities. http://backbonejs.o
 var later = require('later'); // Schedule processing. http://bunkat.github.io/later/ 
 var spawn = require('superspawn').spawn; // https://www.npmjs.com/package/superspawn
 
+var treekill = require('tree-kill');
+
 var BaseModel = require('./baseModel.js').BaseModel;
 
 // Startup and shutdown the app on demand and on schedule.
@@ -346,7 +348,7 @@ exports.Persistence = BaseModel.extend({
 
         // Kill the app.
         clearTimeout(this._restartTimeout);
-        this._appProcess.kill();
+        treekill(this._appProcess.pid, 'SIGKILL');
         if (this._sideProcess) {
             this._sideProcess.kill();
         }
