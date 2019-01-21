@@ -27,7 +27,11 @@ exports.Persistence = BaseModel.extend({
         sideCommand: "",
 
         // A command to run after the first heartbeat to do any additional
-        // system configuration.
+        // system configuration. If heartbeatTimeout is set to zero
+        // postLaunchCommand is run when launchCommand and sideCommand are
+        // launched. The difference between sideCommand and postLaunchCommand in
+        // this case is that postLaunchCommand is not stopped when launchCommand
+        // and sideCommand are stopped.
         postLaunchCommand: "",
 
         // Restart the app if it doesn't start up in this much time. Set to
@@ -421,17 +425,21 @@ exports.Persistence = BaseModel.extend({
             }, this));
         this._resetRestartTimeout(this.get('startupTimeout'));
 
-        if (!this.get('sideCommand')) {
-            return;
+        if (this.get('sideCommand')) {
+          // Start the side process.
+          parts = this._parseCommand(this.get('sideCommand'));
+          this._sideProcess = child_process.spawn(parts[0], parts.slice(1), {
+              cwd: path.dirname(parts[0])
+          }).on('exit', _.bind(function() {
+              this._sideProcess = null;
+          }, this));
         }
 
-        // Start the side process.
-        parts = this._parseCommand(this.get('sideCommand'));
-        this._sideProcess = child_process.spawn(parts[0], parts.slice(1), {
-            cwd: path.dirname(parts[0])
-        }).on('exit', _.bind(function() {
-            this._sideProcess = null;
-        }, this));
+        if (this.get('postLaunchCommand') && (!this.get('heartbeatTimeout') || this.get('heartbeatTimeout') == 0)) {
+          spawn(this.get('postLaunchCommand'), null, null, function(err, output) {
+              console.log(err, output);
+          });
+        }
     },
 
     // Given a command line, parse into an array where the first item is the executable and the rest are the arguments.
