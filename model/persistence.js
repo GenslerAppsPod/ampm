@@ -350,7 +350,7 @@ exports.Persistence = BaseModel.extend({
         clearTimeout(this._restartTimeout);
         treekill(this._appProcess.pid, 'SIGKILL');
         if (this._sideProcess) {
-            this._sideProcess.kill();
+            treekill(this._sideProcess.pid, 'SIGKILL');
         }
 
         // Check on an interval to see if it's dead.
