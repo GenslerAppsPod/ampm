@@ -144,6 +144,21 @@ exports.ConsoleState = BaseModel.extend({
             $$persistence.shutdownMachine();
         }, this));
 
+        if($$config.persistence.commands)
+        {
+          Object.keys($$config.persistence.commands).forEach(function(key) {
+            var value = $$config.persistence.commands[key];
+            console.log("Setting socket event for value: " + value);
+            socket.on(value, _.bind(function() {
+                logger.info('Sending command ' + value + ' sent');
+                $$network.transports.socketToConsole.sockets.emit(value);
+            }, this));
+          });
+          socket.on('logCommand', _.bind(function(message) {
+              logger.info(message);
+          }, this));
+        }
+
         socket.on('switchConfig', _.bind(function(config) {
             $$serverState.saveState('configFile', config, $$persistence.restartServer);
         }, this));
@@ -160,6 +175,7 @@ exports.ConsoleState = BaseModel.extend({
 
         $$network.transports.socketToConsole.sockets.emit('appState', message);
     },
+    
 
     // Update the internal objects which specify the FPS, whether the app is running, memory usage,
     // and uptime.

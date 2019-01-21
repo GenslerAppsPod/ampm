@@ -5,7 +5,8 @@ var View = Backbone.View.extend({
         'click #restart-app': '_onRestartAppClicked',
         'click #shutdown-pc': '_onShutdownPcClicked',
         'click #restart-pc': '_onRestartPcClicked',
-        'click #start-app': '_onStartClicked'
+        'click #start-app': '_onStartClicked',
+        'click #send-command': '_onSendCommandClicked'
     },
 
     _socket: null,
@@ -77,6 +78,22 @@ var View = Backbone.View.extend({
     _onConfig: function(message, configs) {
         this._config = message;
 
+        if(this._config.persistence.commands && Object.keys(this._config.persistence.commands).length > 0)
+        {
+          for(var i = 0; i < Object.keys(this._config.persistence.commands).length; i++)
+          {
+            var key = Object.keys(this._config.persistence.commands)[i];
+            var command = this._config.persistence.commands[key];
+            $('#command-list').empty();
+            $('#command-list').append($('<option value="' + command + '">' + command + '</option>'));
+          }
+
+        }
+        else
+        {
+          $('#command-list').hide();
+        }
+
         if (configs.length == 1) {
             $('#controls-configs').remove();
         } else {
@@ -145,6 +162,10 @@ var View = Backbone.View.extend({
 
     _onStartClicked: function() {
         this._socket.emit('start');
+    },
+
+    _onSendCommandClicked: function() {
+        this._socket.emit($('#command-list').val());
     },
 
     _onConfigClicked: function(event, config) {
